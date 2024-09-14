@@ -2,41 +2,60 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.management.product.model.dao.ProductDAO">
 
+    <!--
+        ProductDTO와 데이터베이스의 PRODUCT_INFO 테이블 간의 매핑을 정의하는 resultMap.
+        각 필드와 테이블의 컬럼을 연결함.
+    -->
     <resultMap id="productResultMap" type="com.management.product.model.dto.ProductDTO">
-        <id property="productCode" column="PRODUCT_CODE"/>
-        <result property="productName" column="PRODUCT_NAME"/>
-        <result property="originCost" column="ORIGIN_COST"/>
-        <result property="releaseDate" column="RELEASE_DATE"/>
-        <result property="discountRate" column="DISCOUNT_RATE"/>
-        <result property="salesQuantity" column="SALES_QUANTITY"/>
-        <result property="stockQuantity" column="STOCK_QUANTITY"/>
-        <result property="categoryCode" column="CATEGORY_CODE"/>
-        <result property="productionStatus" column="PRODUCTION_STATUS"/>
+        <id property="productCode" column="PRODUCT_CODE"/> <!-- 제품 코드 (Primary Key) -->
+        <result property="productName" column="PRODUCT_NAME"/> <!-- 제품명 -->
+        <result property="originCost" column="ORIGIN_COST"/> <!-- 원가 -->
+        <result property="releaseDate" column="RELEASE_DATE"/> <!-- 출시일 -->
+        <result property="discountRate" column="DISCOUNT_RATE"/> <!-- 할인율 -->
+        <result property="salesQuantity" column="SALES_QUANTITY"/> <!-- 판매 수량 -->
+        <result property="stockQuantity" column="STOCK_QUANTITY"/> <!-- 재고 수량 -->
+        <result property="categoryCode" column="CATEGORY_CODE"/> <!-- 제품 분류 코드 -->
+        <result property="productionStatus" column="PRODUCTION_STATUS"/> <!-- 생산 상태 -->
     </resultMap>
 
+    <!--
+        모든 제품 목록을 조회하는 SQL 문.
+        PRODUCT_INFO 테이블에서 모든 컬럼을 선택하여 반환함.
+    -->
     <select id="selectAllProductList" resultMap="productResultMap">
         SELECT
             *
         FROM PRODUCT_INFO
     </select>
 
+    <!--
+        조건에 따라 제품을 조회하는 SQL 문.
+        검색 옵션에 따라 제품명을 부분 검색하거나, 이달의 신제품 또는 생산 중단 제품을 조회함.
+    -->
     <select id="selectProductByCondition" parameterType="com.common.SearchCondition" resultMap="productResultMap">
         SELECT
         *
         FROM PRODUCT_INFO
         <where>
+            <!-- 제품명을 조건으로 조회할 경우 -->
             <if test="option == 'productName'">
                 PRODUCT_NAME LIKE CONCAT('%', #{value}, '%')
             </if>
+            <!-- 이달의 신제품 조회 -->
             <if test="option == 'newProduct'">
                 RELEASE_DATE LIKE CONCAT(DATE_FORMAT(CURDATE(), '%Y%m'), '%')
             </if>
+            <!-- 생산 중단 제품 조회 -->
             <if test="option == 'nonProduction'">
                 PRODUCTION_STATUS = 'N'
             </if>
         </where>
     </select>
 
+    <!--
+        새로운 제품을 등록하는 SQL 문.
+        각 필드에 전달된 제품 정보를 PRODUCT_INFO 테이블에 삽입함.
+    -->
     <insert id="insertProduct" parameterType="com.management.product.model.dto.ProductDTO">
         INSERT INTO PRODUCT_INFO
         (
@@ -50,6 +69,10 @@
             )
     </insert>
 
+    <!--
+        기존 제품 정보를 수정하는 SQL 문.
+        제품 코드를 기준으로 제품 정보를 업데이트함.
+    -->
     <update id="updateProduct" parameterType="com.management.product.model.dto.ProductDTO">
         UPDATE PRODUCT_INFO
         SET PRODUCT_NAME = #{productName},
@@ -63,6 +86,10 @@
         WHERE PRODUCT_CODE = #{productCode}
     </update>
 
+    <!--
+        제품 정보를 삭제하는 SQL 문.
+        전달된 제품 코드를 기준으로 PRODUCT_INFO 테이블에서 삭제함.
+    -->
     <delete id="deleteProduct" parameterType="java.util.Map">
         DELETE FROM PRODUCT_INFO
         WHERE PRODUCT_CODE = #{productCode}
